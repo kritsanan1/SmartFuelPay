@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(26, 83%, 5%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(26, 83%, 5%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(26, 83%, 5%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(26, 83%, 5%);
+  --radius: 0.5rem;
+  
+  /* Custom fuel station colors */
+  --trust-blue: hsl(207, 100%, 40%);
+  --success-green: hsl(140, 100%, 33%);
+  --warning-orange: hsl(20, 100%, 60%);
+  --clean-white: hsl(210, 17%, 98%);
+  --strong-black: hsl(0, 0%, 10%);
+  --neutral-grey: hsl(210, 8%, 46%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-trust-blue {
+    color: var(--trust-blue);
+  }
+  
+  .bg-trust-blue {
+    background-color: var(--trust-blue);
+  }
+  
+  .border-trust-blue {
+    border-color: var(--trust-blue);
+  }
+  
+  .text-success-green {
+    color: var(--success-green);
+  }
+  
+  .bg-success-green {
+    background-color: var(--success-green);
+  }
+  
+  .border-success-green {
+    border-color: var(--success-green);
+  }
+  
+  .text-warning-orange {
+    color: var(--warning-orange);
+  }
+  
+  .bg-warning-orange {
+    background-color: var(--warning-orange);
+  }
+  
+  .border-warning-orange {
+    border-color: var(--warning-orange);
+  }
+  
+  .bg-clean-white {
+    background-color: var(--clean-white);
+  }
+  
+  .text-strong-black {
+    color: var(--strong-black);
+  }
+  
+  .bg-strong-black {
+    background-color: var(--strong-black);
+  }
+  
+  .text-neutral-grey {
+    color: var(--neutral-grey);
+  }
+  
+  .bg-neutral-grey {
+    background-color: var(--neutral-grey);
+  }
+  
+  .border-neutral-grey {
+    border-color: var(--neutral-grey);
+  }
+}
