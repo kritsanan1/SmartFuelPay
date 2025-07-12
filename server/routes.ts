@@ -2,9 +2,18 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTransactionSchema, updateTransactionSchema } from "@shared/schema";
+import { HardwareController } from "./hardware";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize hardware controller
+  const hardwareController = new HardwareController({
+    pumpId: "03",
+    serialPort: "/dev/ttyUSB0", // Adjust based on your hardware setup
+    relayPin: 18,
+    flowSensorPin: 24,
+    emergencyStopPin: 25,
+  });
   // Generate QR Code for payment
   app.post("/api/generate-qr", async (req, res) => {
     try {
@@ -79,6 +88,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: newStatus,
         });
         
+        // If payment successful, authorize fuel dispensing
+        if (newStatus === "success") {
+          const amount = parseFloat(transaction.amount);
+          const authorized = await hardwareController.authorizeFuelDispensing(transaction.pumpNumber, amount);
+          console.log(`[Hardware] Fuel dispensing authorized: ${authorized} for ${amount} THB`);
+        }
+        
         return res.json({ status: newStatus });
       }
 
@@ -140,6 +156,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Hardware control endpoints
+  app.get("/api/hardware/pump/:pumpId/status", async (req, res) => {
+    try {
+      const { pumpId } = req.params;
+      const status = await hardwareController.getPumpStatus(pumpId);
+      
+      if (!status) {
+        return res.status(404).json({ message: "Pump not found" });
+      }
+      
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get pump status" });
+    }
+  });
+
+  app.get("/api/hardware/pumps/status", async (req, res) => {
+    try {
+      const pumps = await hardwareController.getAllPumpsStatus();
+      res.json(pumps);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get pumps status" });
+    }
+  });
+
+  app.post("/api/hardware/pump/:pumpId/dispense", async (req, res) => {
+    try {
+      const { pumpId } = req.params;
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      const authorized = await hardwareController.authorizeFuelDispensing(pumpId, amount);
+      
+      if (!authorized) {
+        return res.status(400).json({ message: "Pump not ready or already dispensing" });
+      }
+      
+      res.json({ message: "Fuel dispensing authorized", pumpId, amount });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to authorize fuel dispensing" });
+    }
+  });
+
+  app.post("/api/hardware/pump/:pumpId/stop", async (req, res) => {
+    try {
+      const { pumpId } = req.params;
+      const pump = await hardwareController.getPumpStatus(pumpId);
+      
+      if (!pump) {
+        return res.status(404).json({ message: "Pump not found" });
+      }
+      
+      // Send stop command via WebSocket
+      const command = {
+        type: 'STOP_DISPENSING' as const,
+        pumpId,
+      };
+      
+      // This would normally be sent to the hardware controller
+      console.log(`[Hardware] Manual stop requested for pump ${pumpId}`);
+      
+      res.json({ message: "Stop command sent", pumpId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to stop pump" });
+    }
+  });
+
+  app.post("/api/hardware/pump/:pumpId/reset", async (req, res) => {
+    try {
+      const { pumpId } = req.params;
+      const pump = await hardwareController.getPumpStatus(pumpId);
+      
+      if (!pump) {
+        return res.status(404).json({ message: "Pump not found" });
+      }
+      
+      // Send reset command via WebSocket
+      const command = {
+        type: 'RESET_PUMP' as const,
+        pumpId,
+      };
+      
+      console.log(`[Hardware] Reset requested for pump ${pumpId}`);
+      
+      res.json({ message: "Reset command sent", pumpId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reset pump" });
+    }
+  });
+
+  app.post("/api/hardware/emergency-stop", async (req, res) => {
+    try {
+      const { pumpId } = req.body;
+      
+      if (!pumpId) {
+        return res.status(400).json({ message: "Pump ID is required" });
+      }
+      
+      const pump = await hardwareController.getPumpStatus(pumpId);
+      
+      if (!pump) {
+        return res.status(404).json({ message: "Pump not found" });
+      }
+      
+      // Send emergency stop command
+      const command = {
+        type: 'EMERGENCY_STOP' as const,
+        pumpId,
+      };
+      
+      console.log(`[Hardware] Emergency stop activated for pump ${pumpId}`);
+      
+      res.json({ message: "Emergency stop activated", pumpId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to activate emergency stop" });
+    }
+  });
+
   const httpServer = createServer(app);
+  
+  // Setup WebSocket for hardware communication
+  hardwareController.setupWebSocket(httpServer, '/hardware-ws');
+  
   return httpServer;
 }

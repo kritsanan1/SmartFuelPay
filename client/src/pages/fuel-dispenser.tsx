@@ -7,6 +7,7 @@ import { QRPayment } from "@/components/qr-payment";
 import { PaymentSuccess } from "@/components/payment-success";
 import { PaymentError } from "@/components/payment-error";
 import { TransactionHistory } from "@/components/transaction-history";
+import { HardwareControl } from "@/components/hardware-control";
 import { usePayment } from "@/hooks/use-payment";
 import { LANGUAGES, TRANSLATIONS, PAYMENT_STATUS } from "@/lib/constants";
 
@@ -172,8 +173,9 @@ export default function FuelDispenser() {
           />
         )}
 
-        {/* Transaction History */}
-        <div className="mt-8">
+        {/* Hardware Control and Transaction History */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <HardwareControl pumpId="03" language={language} />
           <TransactionHistory language={language} />
         </div>
       </main>

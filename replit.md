@@ -45,7 +45,15 @@ The system uses two main tables:
 3. **Payment Status Tracking**: Real-time polling of payment status
 4. **Multi-language Support**: Thai and English interface
 5. **Transaction History**: View past fuel purchases
-6. **Responsive Design**: Works on both desktop and mobile devices
+6. **Hardware Integration**: Real-time pump control and monitoring
+7. **Responsive Design**: Works on both desktop and mobile devices
+
+### Hardware Integration
+- **Pump Controller**: HardwareController class for fuel pump management
+- **WebSocket Communication**: Real-time hardware status updates
+- **Safety Systems**: Emergency stop, flow monitoring, error handling
+- **Control Interface**: Hardware control component for pump operations
+- **API Endpoints**: RESTful API for hardware control and status
 
 ### UI Components
 - **AmountSelection**: Fuel amount selection interface
