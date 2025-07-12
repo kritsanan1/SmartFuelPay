@@ -1,4 +1,6 @@
 import { users, transactions, type User, type InsertUser, type Transaction, type InsertTransaction, type UpdateTransaction } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -13,86 +15,66 @@ export interface IStorage {
   getAllTransactions(): Promise<Transaction[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private transactions: Map<number, Transaction>;
-  private currentUserId: number;
-  private currentTransactionId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.transactions = new Map();
-    this.currentUserId = 1;
-    this.currentTransactionId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
-    const id = this.currentTransactionId++;
-    const now = new Date();
-    const transaction: Transaction = {
-      ...insertTransaction,
-      id,
-      createdAt: now,
-      updatedAt: now,
-      pumpNumber: insertTransaction.pumpNumber || "03",
-      fuelType: insertTransaction.fuelType || "Gasohol 95",
-      pricePerLiter: insertTransaction.pricePerLiter || "35.50",
-      qrCodeData: insertTransaction.qrCodeData || null,
-    };
-    this.transactions.set(id, transaction);
+    const [transaction] = await db
+      .insert(transactions)
+      .values(insertTransaction)
+      .returning();
     return transaction;
   }
 
   async getTransaction(id: number): Promise<Transaction | undefined> {
-    return this.transactions.get(id);
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction || undefined;
   }
 
   async getTransactionByTransactionId(transactionId: string): Promise<Transaction | undefined> {
-    return Array.from(this.transactions.values()).find(
-      (transaction) => transaction.transactionId === transactionId,
-    );
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.transactionId, transactionId));
+    return transaction || undefined;
   }
 
   async updateTransaction(updateTransaction: UpdateTransaction): Promise<Transaction | undefined> {
-    const existing = this.transactions.get(updateTransaction.id);
-    if (!existing) return undefined;
-
-    const updated: Transaction = {
-      ...existing,
-      ...updateTransaction,
-      updatedAt: new Date(),
-    };
-    this.transactions.set(updateTransaction.id, updated);
-    return updated;
+    const [transaction] = await db
+      .update(transactions)
+      .set(updateTransaction)
+      .where(eq(transactions.id, updateTransaction.id))
+      .returning();
+    return transaction || undefined;
   }
 
   async getRecentTransactions(limit: number): Promise<Transaction[]> {
-    return Array.from(this.transactions.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return await db
+      .select()
+      .from(transactions)
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
   }
 
   async getAllTransactions(): Promise<Transaction[]> {
-    return Array.from(this.transactions.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db
+      .select()
+      .from(transactions)
+      .orderBy(desc(transactions.createdAt));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

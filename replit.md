@@ -21,15 +21,16 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: PostgreSQL with Drizzle ORM (Active)
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Session Management**: In-memory storage for development
+- **Session Management**: PostgreSQL-based persistent storage
 
 ### Data Storage Solutions
-- **Database**: PostgreSQL via Neon Database
+- **Database**: PostgreSQL via Neon Database (Active)
 - **ORM**: Drizzle ORM for type-safe database operations
 - **Schema**: Shared schema definitions using Drizzle and Zod
 - **Migrations**: Drizzle Kit for database migrations
+- **Storage Layer**: DatabaseStorage class implementing IStorage interface
 
 ## Key Components
 
