@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Menu, Fuel, Home, Shield, User, BarChart3, Wrench } from "lucide-react";
+import { Menu, Fuel, Home, Shield, User, BarChart3, Wrench, Activity } from "lucide-react";
 
 export default function Navigation() {
   const [location] = useLocation();
@@ -70,6 +70,18 @@ export default function Navigation() {
           <Badge variant="secondary" className="ml-auto">Tech</Badge>
         </Button>
       </Link>
+
+      <Link href="/monitor">
+        <Button 
+          variant={isActive("/monitor") ? "default" : "ghost"} 
+          className="w-full justify-start"
+          onClick={() => setIsOpen(false)}
+        >
+          <Activity className="mr-2 h-4 w-4" />
+          Real-Time Monitor
+          <Badge variant="secondary" className="ml-auto">Live</Badge>
+        </Button>
+      </Link>
     </div>
   );
 
@@ -95,8 +107,8 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Desktop Navigation - Show for all admin/analytics/maintenance routes */}
-      {(location.startsWith("/admin") || location.startsWith("/analytics") || location.startsWith("/maintenance") || location.startsWith("/customer")) && (
+      {/* Desktop Navigation - Show for all admin/analytics/maintenance/monitor routes */}
+      {(location.startsWith("/admin") || location.startsWith("/analytics") || location.startsWith("/maintenance") || location.startsWith("/customer") || location.startsWith("/monitor")) && (
         <div className="hidden lg:block fixed top-4 left-4 z-50">
           <div className="bg-white/90 backdrop-blur-sm border rounded-lg p-4 w-64">
             <div className="flex items-center space-x-2 mb-4">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Fuel, Globe } from "lucide-react";
+import { Fuel, Globe, Activity } from "lucide-react";
 import { ProgressSteps } from "@/components/progress-steps";
 import { AmountSelection } from "@/components/amount-selection";
 import { QRPayment } from "@/components/qr-payment";
@@ -8,6 +8,8 @@ import { PaymentSuccess } from "@/components/payment-success";
 import { PaymentError } from "@/components/payment-error";
 import { TransactionHistory } from "@/components/transaction-history";
 import { HardwareControl } from "@/components/hardware-control";
+import PumpStatusDisplay from "@/components/pump-status-display";
+import { PumpVisualization } from "@/components/animated-fuel-flow";
 import { usePayment } from "@/hooks/use-payment";
 import { LANGUAGES, TRANSLATIONS, PAYMENT_STATUS } from "@/lib/constants";
 
@@ -129,18 +131,61 @@ export default function FuelDispenser() {
         {/* Progress Steps */}
         <ProgressSteps currentStep={getCurrentStep()} language={language} />
 
-        {/* Screen Content */}
-        {currentScreen === "amount" && (
-          <AmountSelection
-            selectedAmount={selectedAmount}
-            onAmountChange={handleAmountChange}
-            onGenerateQR={handleGenerateQR}
-            isGenerating={isGeneratingQR}
-            language={language}
-          />
+        {/* Real-time Pump Status */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main interface */}
+            <div className="lg:col-span-2">
+              {currentScreen === "amount" && (
+                <AmountSelection
+                  selectedAmount={selectedAmount}
+                  onAmountChange={handleAmountChange}
+                  onGenerateQR={handleGenerateQR}
+                  isGenerating={isGeneratingQR}
+                  language={language}
+                />
+              )}
+            </div>
+            
+            {/* Live pump status */}
+            <div className="lg:col-span-1">
+              <PumpStatusDisplay 
+                pumpId="03"
+                showControls={true}
+                compact={false}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Full screen content for other screens */}
+        {currentScreen === "qr" && qrData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <QRPayment
+                qrData={qrData.qrCodeData}
+                transactionId={qrData.transactionId}
+                amount={qrData.amount}
+                countdown={formatCountdown(countdown)}
+                isWaiting={isCountdownActive}
+                onCancel={handleCancelPayment}
+                isCancelling={isCancellingPayment}
+                language={language}
+              />
+            </div>
+            <div>
+              <PumpVisualization
+                isDispensing={paymentStatus === PAYMENT_STATUS.SUCCESS}
+                flowRate={paymentStatus === PAYMENT_STATUS.SUCCESS ? 75 : 0}
+                fuelType="gasohol95"
+                targetAmount={selectedAmount}
+                dispensedAmount={paymentStatus === PAYMENT_STATUS.SUCCESS ? selectedAmount * 0.8 : 0}
+              />
+            </div>
+          </div>
         )}
 
-        {currentScreen === "qr" && qrData && (
+        {currentScreen === "qr" && qrData && false && (
           <QRPayment
             qrData={qrData.qrCodeData}
             transactionId={qrData.transactionId}
@@ -154,15 +199,28 @@ export default function FuelDispenser() {
         )}
 
         {currentScreen === "success" && currentTransactionId && (
-          <PaymentSuccess
-            transactionId={currentTransactionId}
-            amount={selectedAmount}
-            timestamp={new Date().toLocaleString(
-              language === "th" ? "th-TH" : "en-US"
-            )}
-            onNewTransaction={handleNewTransaction}
-            language={language}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <PaymentSuccess
+                transactionId={currentTransactionId}
+                amount={selectedAmount}
+                timestamp={new Date().toLocaleString(
+                  language === "th" ? "th-TH" : "en-US"
+                )}
+                onNewTransaction={handleNewTransaction}
+                language={language}
+              />
+            </div>
+            <div>
+              <PumpVisualization
+                isDispensing={true}
+                flowRate={90}
+                fuelType="gasohol95"
+                targetAmount={selectedAmount}
+                dispensedAmount={selectedAmount}
+              />
+            </div>
+          </div>
         )}
 
         {currentScreen === "error" && (

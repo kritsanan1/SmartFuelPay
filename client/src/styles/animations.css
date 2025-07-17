@@ -1,0 +1,187 @@
+/* Fuel Flow Animations */
+@keyframes flowVertical {
+  0% {
+    top: -20px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes flowHorizontal {
+  0% {
+    left: -20px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes shimmerVertical {
+  0% {
+    top: -20px;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes shimmerHorizontal {
+  0% {
+    left: -20px;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Pump Status Animations */
+@keyframes pumpPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes flowIndicator {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes statusBlink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+/* Gauge Animations */
+@keyframes fillProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: var(--target-width);
+  }
+}
+
+@keyframes rotateGauge {
+  0% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(var(--target-rotation));
+  }
+}
+
+/* Real-time Status Indicators */
+@keyframes heartbeat {
+  0%, 50%, 100% {
+    transform: scale(1);
+  }
+  25%, 75% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes dataStream {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Utility Animation Classes */
+.animate-flow-vertical {
+  animation: flowVertical 2s infinite linear;
+}
+
+.animate-flow-horizontal {
+  animation: flowHorizontal 2s infinite linear;
+}
+
+.animate-shimmer-vertical {
+  animation: shimmerVertical 1.5s infinite linear;
+}
+
+.animate-shimmer-horizontal {
+  animation: shimmerHorizontal 1.5s infinite linear;
+}
+
+.animate-pump-pulse {
+  animation: pumpPulse 2s infinite ease-in-out;
+}
+
+.animate-status-blink {
+  animation: statusBlink 1s infinite;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 2s infinite ease-in-out;
+}
+
+.animate-data-stream {
+  animation: dataStream 3s infinite linear;
+}
+
+/* Responsive Animation Controls */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flow-vertical,
+  .animate-flow-horizontal,
+  .animate-shimmer-vertical,
+  .animate-shimmer-horizontal,
+  .animate-pump-pulse,
+  .animate-status-blink,
+  .animate-heartbeat,
+  .animate-data-stream {
+    animation: none;
+  }
+}
+
+/* Performance Optimizations */
+.animate-flow-vertical,
+.animate-flow-horizontal,
+.animate-shimmer-vertical,
+.animate-shimmer-horizontal {
+  will-change: transform, opacity;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.animate-pump-pulse,
+.animate-heartbeat {
+  will-change: transform;
+  transform: translateZ(0);
+}

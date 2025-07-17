@@ -9,6 +9,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import CustomerPortal from "@/pages/customer-portal";
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
 import MaintenanceSystem from "@/pages/maintenance-system";
+import RealTimeMonitor from "@/pages/real-time-monitor";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/customer" component={CustomerPortal} />
       <Route path="/analytics" component={AnalyticsDashboard} />
       <Route path="/maintenance" component={MaintenanceSystem} />
+      <Route path="/monitor" component={RealTimeMonitor} />
       <Route component={NotFound} />
     </Switch>
   );
