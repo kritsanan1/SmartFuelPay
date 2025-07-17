@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Menu, Fuel, Settings, BarChart3, Home, Shield } from "lucide-react";
+import { Menu, Fuel, Home, Shield, User, BarChart3, Wrench } from "lucide-react";
 
 export default function Navigation() {
   const [location] = useLocation();
@@ -20,7 +20,18 @@ export default function Navigation() {
           onClick={() => setIsOpen(false)}
         >
           <Home className="mr-2 h-4 w-4" />
-          Customer Interface
+          Fuel Dispenser
+        </Button>
+      </Link>
+      
+      <Link href="/customer">
+        <Button 
+          variant={isActive("/customer") ? "default" : "ghost"} 
+          className="w-full justify-start"
+          onClick={() => setIsOpen(false)}
+        >
+          <User className="mr-2 h-4 w-4" />
+          Customer Portal
         </Button>
       </Link>
       
@@ -35,15 +46,32 @@ export default function Navigation() {
           <Badge variant="secondary" className="ml-auto">Admin</Badge>
         </Button>
       </Link>
+
+      <Link href="/analytics">
+        <Button 
+          variant={isActive("/analytics") ? "default" : "ghost"} 
+          className="w-full justify-start"
+          onClick={() => setIsOpen(false)}
+        >
+          <BarChart3 className="mr-2 h-4 w-4" />
+          Analytics
+          <Badge variant="secondary" className="ml-auto">Pro</Badge>
+        </Button>
+      </Link>
+
+      <Link href="/maintenance">
+        <Button 
+          variant={isActive("/maintenance") ? "default" : "ghost"} 
+          className="w-full justify-start"
+          onClick={() => setIsOpen(false)}
+        >
+          <Wrench className="mr-2 h-4 w-4" />
+          Maintenance
+          <Badge variant="secondary" className="ml-auto">Tech</Badge>
+        </Button>
+      </Link>
     </div>
   );
-
-  // Only show navigation on desktop for admin routes or mobile always
-  const shouldShowNav = location.startsWith("/admin") || window.innerWidth < 768;
-
-  if (!shouldShowNav && window.innerWidth >= 768) {
-    return null;
-  }
 
   return (
     <>
@@ -59,7 +87,7 @@ export default function Navigation() {
             <SheetContent side="left" className="w-72">
               <div className="flex items-center space-x-2 mb-6">
                 <Fuel className="h-6 w-6" />
-                <h2 className="text-lg font-semibold">Fuel Station</h2>
+                <h2 className="text-lg font-semibold">Fuel Station System</h2>
               </div>
               <NavItems />
             </SheetContent>
@@ -67,8 +95,8 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Desktop Navigation - Only for admin */}
-      {location.startsWith("/admin") && (
+      {/* Desktop Navigation - Show for all admin/analytics/maintenance routes */}
+      {(location.startsWith("/admin") || location.startsWith("/analytics") || location.startsWith("/maintenance") || location.startsWith("/customer")) && (
         <div className="hidden lg:block fixed top-4 left-4 z-50">
           <div className="bg-white/90 backdrop-blur-sm border rounded-lg p-4 w-64">
             <div className="flex items-center space-x-2 mb-4">
