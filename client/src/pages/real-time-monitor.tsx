@@ -25,26 +25,27 @@ export default function RealTimeMonitor() {
   const [selectedPump, setSelectedPump] = useState("03");
   const [viewMode, setViewMode] = useState<"grid" | "detail">("grid");
 
-  // Mock system data
+  // System data based on available pumps
   const systemOverview: SystemOverview = {
-    totalPumps: 3,
-    activePumps: 2,
+    totalPumps: 1, // Only pump 03 is available
+    activePumps: 1,
     totalTransactionsToday: 127,
     averageFlowRate: 45.2,
     systemEfficiency: 98.5,
     alertsCount: 0
   };
 
-  const pumps = ["01", "02", "03"];
+  // Only include pumps that actually exist to avoid 404 errors
+  const pumps = ["03"]; // Only pump 03 is available based on server configuration
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto p-6">
+    <div className="min-h-screen mobile-viewport-fix bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto container-mobile py-4 sm:py-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center spacing-mobile-md">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Real-Time Monitoring</h1>
-            <p className="text-gray-600 dark:text-gray-300">ติดตามสถานะระบบแบบเรียลไทม์</p>
+            <h1 className="text-mobile-hero font-bold text-gray-900 dark:text-white">Real-Time Monitoring</h1>
+            <p className="text-gray-600 dark:text-gray-300 text-mobile-body">ติดตามสถานะระบบแบบเรียลไทม์</p>
           </div>
           <div className="flex gap-2">
             <Button 
@@ -65,7 +66,7 @@ export default function RealTimeMonitor() {
         </div>
 
         {/* System Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid-mobile-3 gap-3 sm:gap-4 spacing-mobile-md">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Pumps</CardTitle>

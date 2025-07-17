@@ -96,30 +96,32 @@ export default function FuelDispenser() {
   }
 
   return (
-    <div className="min-h-screen bg-clean-white font-sans">
+    <div className="min-h-screen mobile-viewport-fix bg-clean-white font-sans">
       {/* Header */}
       <header className="bg-trust-blue text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto container-mobile py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Fuel className="w-8 h-8" />
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Fuel className="w-6 h-6 sm:w-8 sm:h-8" />
               <div>
-                <h1 className="text-2xl font-bold">{t.title}</h1>
-                <p className="text-blue-100 font-roboto">{t.subtitle}</p>
+                <h1 className="text-mobile-title font-bold">{t.title}</h1>
+                <p className="text-blue-100 font-roboto text-sm sm:text-base hidden sm:block">{t.subtitle}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
                 onClick={toggleLanguage}
                 variant="secondary"
-                className="bg-blue-600 hover:bg-blue-700 text-white border-none"
+                className="bg-blue-600 hover:bg-blue-700 text-white border-none btn-mobile-sm"
               >
-                <Globe className="w-4 h-4 mr-2" />
-                {language === LANGUAGES.TH ? "EN" : "ไทย"}
+                <Globe className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {language === LANGUAGES.TH ? "EN" : "ไทย"}
+                </span>
               </Button>
               <div className="text-right">
-                <div className="text-sm text-blue-100">หัวจ่าย / Pump</div>
-                <div className="text-xl font-bold">03</div>
+                <div className="text-xs sm:text-sm text-blue-100">หัวจ่าย / Pump</div>
+                <div className="text-lg sm:text-xl font-bold">03</div>
               </div>
             </div>
           </div>
@@ -127,13 +129,13 @@ export default function FuelDispenser() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="container mx-auto container-mobile py-4 sm:py-6 md:py-8 max-w-6xl">
         {/* Progress Steps */}
         <ProgressSteps currentStep={getCurrentStep()} language={language} />
 
         {/* Real-time Pump Status */}
-        <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="spacing-mobile-md">
+          <div className="grid-mobile-3 gap-4 sm:gap-6">
             {/* Main interface */}
             <div className="lg:col-span-2">
               {currentScreen === "amount" && (
@@ -160,7 +162,7 @@ export default function FuelDispenser() {
 
         {/* Full screen content for other screens */}
         {currentScreen === "qr" && qrData && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid-mobile-2 gap-4 sm:gap-6 md:gap-8">
             <div>
               <QRPayment
                 qrData={qrData.qrCodeData}

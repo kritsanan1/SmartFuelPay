@@ -45,21 +45,21 @@ export function AmountSelection({
 
   return (
     <Card className="bg-white rounded-2xl shadow-xl">
-      <CardContent className="p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-strong-black mb-2">
+      <CardContent className="card-mobile">
+        <div className="text-center spacing-mobile-sm">
+          <h2 className="text-mobile-title font-bold text-strong-black">
             {t.selectAmount}
           </h2>
-          <p className="text-neutral-grey font-roboto text-lg">
+          <p className="text-neutral-grey font-roboto text-mobile-body">
             {t.selectAmountEn}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid-mobile-2 gap-4 sm:gap-6 md:gap-8">
           {/* Amount Input Section */}
-          <div className="space-y-6">
-            <div className="bg-clean-white rounded-xl p-6 border-2 border-neutral-grey/20">
-              <label className="block text-lg font-semibold text-strong-black mb-3">
+          <div className="spacing-mobile-sm">
+            <div className="bg-clean-white rounded-xl card-mobile-sm border-2 border-neutral-grey/20">
+              <label className="block text-mobile-body font-semibold text-strong-black mb-3">
                 กรอกจำนวนเงิน ({t.currency}) / Enter Amount ({t.currency})
               </label>
               <div className="relative">
@@ -68,31 +68,31 @@ export function AmountSelection({
                   placeholder="0.00"
                   value={customAmount}
                   onChange={(e) => handleCustomAmountChange(e.target.value)}
-                  className="w-full text-4xl font-bold text-center py-4 px-6 border-2 border-neutral-grey/30 rounded-xl focus:border-trust-blue bg-white h-auto"
+                  className="w-full text-2xl sm:text-3xl md:text-4xl font-bold text-center py-3 sm:py-4 px-4 sm:px-6 border-2 border-neutral-grey/30 rounded-xl focus:border-trust-blue bg-white touch-target form-mobile"
                   min="50"
                   max="5000"
                   step="0.01"
                 />
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-neutral-grey text-xl">
+                <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-neutral-grey text-lg sm:text-xl">
                   ฿
                 </div>
               </div>
-              <div className="text-sm text-neutral-grey mt-2 text-center font-roboto">
+              <div className="text-mobile-caption text-neutral-grey mt-2 text-center font-roboto">
                 Minimum: 50 THB | Maximum: 5,000 THB
               </div>
             </div>
 
             {/* Quick Amount Buttons */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-strong-black">
+            <div className="spacing-mobile-xs">
+              <h3 className="text-mobile-body font-semibold text-strong-black">
                 จำนวนเงินยอดนิยม / Popular Amounts
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {QUICK_AMOUNTS.map((amount) => (
                   <Button
                     key={amount}
                     variant="outline"
-                    className={`h-auto py-4 px-6 font-bold text-xl rounded-xl border-2 transition-all duration-200 ${
+                    className={`btn-mobile py-3 sm:py-4 px-3 sm:px-6 font-bold text-lg sm:text-xl rounded-xl border-2 transition-all duration-200 ${
                       selectedQuickAmount === amount
                         ? "bg-trust-blue text-white border-trust-blue hover:bg-trust-blue/90"
                         : "bg-clean-white border-neutral-grey/30 hover:bg-trust-blue hover:text-white hover:border-trust-blue"
@@ -100,8 +100,8 @@ export function AmountSelection({
                     onClick={() => handleQuickAmountSelect(amount)}
                   >
                     <div className="text-center">
-                      <div className="text-2xl">{amount.toLocaleString()}</div>
-                      <div className="text-sm opacity-75">{t.currency}</div>
+                      <div className="text-xl sm:text-2xl">{amount.toLocaleString()}</div>
+                      <div className="text-xs sm:text-sm opacity-75">{t.currency}</div>
                     </div>
                   </Button>
                 ))}

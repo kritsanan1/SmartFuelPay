@@ -1,0 +1,169 @@
+/* Mobile-First Responsive Utilities */
+
+/* Touch-friendly minimum sizes */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-optimized button sizes */
+.btn-mobile {
+  @apply touch-target px-6 py-3 text-base;
+}
+
+.btn-mobile-sm {
+  @apply touch-target px-4 py-2 text-sm;
+}
+
+/* Mobile typography scale */
+.text-mobile-hero {
+  @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+}
+
+.text-mobile-title {
+  @apply text-xl sm:text-2xl md:text-3xl;
+}
+
+.text-mobile-subtitle {
+  @apply text-lg sm:text-xl md:text-2xl;
+}
+
+.text-mobile-body {
+  @apply text-base sm:text-lg;
+}
+
+.text-mobile-caption {
+  @apply text-sm sm:text-base;
+}
+
+/* Mobile-friendly spacing */
+.spacing-mobile-xs {
+  @apply space-y-2 sm:space-y-3 md:space-y-4;
+}
+
+.spacing-mobile-sm {
+  @apply space-y-3 sm:space-y-4 md:space-y-6;
+}
+
+.spacing-mobile-md {
+  @apply space-y-4 sm:space-y-6 md:space-y-8;
+}
+
+.spacing-mobile-lg {
+  @apply space-y-6 sm:space-y-8 md:space-y-12;
+}
+
+/* Mobile container utilities */
+.container-mobile {
+  @apply px-4 sm:px-6 md:px-8 lg:px-12;
+}
+
+.max-width-mobile {
+  @apply max-w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl;
+}
+
+/* Mobile grid utilities */
+.grid-mobile-1 {
+  @apply grid grid-cols-1;
+}
+
+.grid-mobile-2 {
+  @apply grid grid-cols-1 sm:grid-cols-2;
+}
+
+.grid-mobile-3 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+}
+
+.grid-mobile-4 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+/* Mobile card adjustments */
+.card-mobile {
+  @apply p-4 sm:p-6 md:p-8;
+}
+
+.card-mobile-sm {
+  @apply p-3 sm:p-4 md:p-6;
+}
+
+/* Mobile-specific hiding/showing */
+.mobile-only {
+  @apply block sm:hidden;
+}
+
+.desktop-only {
+  @apply hidden sm:block;
+}
+
+.tablet-up {
+  @apply hidden md:block;
+}
+
+.mobile-tablet {
+  @apply block lg:hidden;
+}
+
+/* Mobile form improvements */
+.form-mobile input,
+.form-mobile select,
+.form-mobile textarea {
+  @apply touch-target text-base;
+}
+
+.form-mobile label {
+  @apply text-mobile-body font-medium;
+}
+
+/* Mobile navigation utilities */
+.nav-mobile {
+  @apply flex flex-col sm:flex-row;
+}
+
+.nav-mobile-item {
+  @apply touch-target flex items-center justify-center;
+}
+
+/* Mobile pump display optimizations */
+.pump-mobile {
+  @apply flex flex-col sm:flex-row gap-4 sm:gap-6;
+}
+
+.pump-status-mobile {
+  @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4;
+}
+
+/* Swipe gesture support */
+.swipe-container {
+  @apply overflow-x-auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.swipe-item {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+
+/* Mobile-optimized animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile viewport fixes */
+.mobile-viewport-fix {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Mobile-safe z-index scale */
+.z-mobile-dropdown { z-index: 1000; }
+.z-mobile-sticky { z-index: 1010; }
+.z-mobile-modal { z-index: 1020; }
+.z-mobile-toast { z-index: 1030; }
+.z-mobile-tooltip { z-index: 1040; }

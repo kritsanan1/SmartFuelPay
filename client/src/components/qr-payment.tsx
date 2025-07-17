@@ -29,21 +29,21 @@ export function QRPayment({
 
   return (
     <Card className="bg-white rounded-2xl shadow-xl">
-      <CardContent className="p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-strong-black mb-2">
+      <CardContent className="card-mobile">
+        <div className="text-center spacing-mobile-sm">
+          <h2 className="text-mobile-title font-bold text-strong-black">
             {t.scanQR}
           </h2>
-          <p className="text-neutral-grey font-roboto text-lg">
+          <p className="text-neutral-grey font-roboto text-mobile-body">
             {t.scanQREn}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid-mobile-2 gap-4 sm:gap-6 md:gap-8">
           {/* QR Code Display */}
-          <div className="flex flex-col items-center space-y-6">
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-4 border-trust-blue/20">
-              <QRCode data={qrData} size={256} />
+          <div className="flex flex-col items-center spacing-mobile-sm">
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg border-4 border-trust-blue/20">
+              <QRCode data={qrData} size={200} className="w-full h-auto max-w-[256px]" />
             </div>
 
             {/* Payment Instructions */}

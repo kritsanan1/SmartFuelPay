@@ -1,4 +1,5 @@
 @import "./styles/animations.css";
+@import "./styles/mobile-optimization.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -63,6 +64,14 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* Optimize font loading */
+    font-display: swap;
+  }
+
+  /* Preload critical fonts */
+  @font-face {
+    font-family: 'system-ui';
+    font-display: swap;
   }
 }
 

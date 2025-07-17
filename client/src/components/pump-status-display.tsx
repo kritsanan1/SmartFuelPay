@@ -44,9 +44,32 @@ export default function PumpStatusDisplay({
   const [animationState, setAnimationState] = useState<"idle" | "flowing" | "pulsing">("idle");
   const [flowRate, setFlowRate] = useState(0);
 
-  const { data: pumpStatus } = useQuery<PumpStatus>({
+  const { data: pumpStatus, error } = useQuery<PumpStatus>({
     queryKey: [`/api/hardware/pump/${pumpId}/status`],
-    refetchInterval: 1000, // Update every second for real-time status
+    refetchInterval: (data, query) => {
+      // If pump doesn't exist, stop polling
+      if (query?.state?.error && (
+        query.state.error.message?.includes('404') || 
+        query.state.error.message?.includes('Pump not found')
+      )) {
+        return false;
+      }
+      // Reduce polling for idle pumps
+      if (data?.status === 'idle') {
+        return 5000; // Poll every 5 seconds for idle pumps
+      }
+      // Fast polling for active pumps
+      return data?.status === 'dispensing' ? 1000 : 3000;
+    },
+    retry: (failureCount, error: any) => {
+      // Don't retry for 404 errors (pump doesn't exist)
+      if (error?.message?.includes('404') || error?.status === 404) {
+        return false;
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Mock data for demonstration
