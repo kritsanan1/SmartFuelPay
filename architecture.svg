@@ -1,0 +1,198 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 20px sans-serif; fill: #1f2937; }
+      .subtitle { font: 14px sans-serif; fill: #4b5563; }
+      .component { font: 12px sans-serif; fill: #374151; }
+      .flow-text { font: 10px sans-serif; fill: #6b7280; }
+      .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 2; rx: 8; }
+      .frontend { fill: #dbeafe; stroke: #3b82f6; }
+      .backend { fill: #dcfce7; stroke: #22c55e; }
+      .database { fill: #fef3c7; stroke: #f59e0b; }
+      .external { fill: #fce7f3; stroke: #ec4899; }
+      .flow { stroke: #6b7280; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #3b82f6; stroke-width: 3; fill: none; marker-end: url(#arrowhead-blue); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="title">Automated Fuel Dispensing System Architecture</text>
+  <text x="600" y="50" text-anchor="middle" class="subtitle">Comprehensive System Overview with Data Flow</text>
+
+  <!-- Frontend Layer -->
+  <text x="50" y="90" class="subtitle">Frontend Layer (React + TypeScript)</text>
+  
+  <!-- Main App -->
+  <rect x="50" y="100" width="300" height="120" class="box frontend"/>
+  <text x="200" y="120" text-anchor="middle" class="component">App.tsx - Root Component</text>
+  <text x="70" y="140" class="component">• Routing (Wouter)</text>
+  <text x="70" y="155" class="component">• React Query Provider</text>
+  <text x="70" y="170" class="component">• Lazy Loading</text>
+  <text x="70" y="185" class="component">• Global State Management</text>
+  <text x="70" y="200" class="component">• Mobile-First Design</text>
+
+  <!-- Pages -->
+  <rect x="400" y="100" width="350" height="120" class="box frontend"/>
+  <text x="575" y="120" text-anchor="middle" class="component">Page Components</text>
+  <text x="420" y="140" class="component">• fuel-dispenser.tsx - Customer Interface</text>
+  <text x="420" y="155" class="component">• admin-dashboard.tsx - Admin Controls</text>
+  <text x="420" y="170" class="component">• customer-portal.tsx - User Account</text>
+  <text x="420" y="185" class="component">• real-time-monitor.tsx - Live Monitoring</text>
+  <text x="420" y="200" class="component">• analytics-dashboard.tsx - Business Insights</text>
+
+  <!-- Business Components -->
+  <rect x="50" y="250" width="280" height="100" class="box frontend"/>
+  <text x="190" y="270" text-anchor="middle" class="component">Business Components</text>
+  <text x="70" y="290" class="component">• QR Payment Processing</text>
+  <text x="70" y="305" class="component">• Pump Status Display</text>
+  <text x="70" y="320" class="component">• Hardware Control Interface</text>
+  <text x="70" y="335" class="component">• Transaction Management</text>
+
+  <!-- UI Components -->
+  <rect x="370" y="250" width="200" height="100" class="box frontend"/>
+  <text x="470" y="270" text-anchor="middle" class="component">UI Components (shadcn/ui)</text>
+  <text x="390" y="290" class="component">• Button, Card, Dialog</text>
+  <text x="390" y="305" class="component">• Form, Input, Select</text>
+  <text x="390" y="320" class="component">• Navigation, Toast</text>
+  <text x="390" y="335" class="component">• Mobile Optimized</text>
+
+  <!-- Hooks & Utils -->
+  <rect x="600" y="250" width="150" height="100" class="box frontend"/>
+  <text x="675" y="270" text-anchor="middle" class="component">Hooks & Utils</text>
+  <text x="620" y="290" class="component">• usePayment</text>
+  <text x="620" y="305" class="component">• useOptimizedPolling</text>
+  <text x="620" y="320" class="component">• Performance Hooks</text>
+  <text x="620" y="335" class="component">• Mobile Detection</text>
+
+  <!-- Backend Layer -->
+  <text x="50" y="390" class="subtitle">Backend Layer (Node.js + Express)</text>
+
+  <!-- Express Server -->
+  <rect x="50" y="400" width="200" height="120" class="box backend"/>
+  <text x="150" y="420" text-anchor="middle" class="component">Express Server</text>
+  <text x="70" y="440" class="component">• index.ts - Server Entry</text>
+  <text x="70" y="455" class="component">• Session Management</text>
+  <text x="70" y="470" class="component">• CORS & Security</text>
+  <text x="70" y="485" class="component">• WebSocket Support</text>
+  <text x="70" y="500" class="component">• Error Handling</text>
+
+  <!-- API Routes -->
+  <rect x="280" y="400" width="220" height="120" class="box backend"/>
+  <text x="390" y="420" text-anchor="middle" class="component">API Routes</text>
+  <text x="300" y="440" class="component">• /api/transactions - Payment</text>
+  <text x="300" y="455" class="component">• /api/hardware - Pump Control</text>
+  <text x="300" y="470" class="component">• /api/admin - Management</text>
+  <text x="300" y="485" class="component">• /api/customer - User Data</text>
+  <text x="300" y="500" class="component">• WebSocket /hardware-ws</text>
+
+  <!-- Storage Layer -->
+  <rect x="530" y="400" width="200" height="120" class="box backend"/>
+  <text x="630" y="420" text-anchor="middle" class="component">Storage Layer</text>
+  <text x="550" y="440" class="component">• IStorage Interface</text>
+  <text x="550" y="455" class="component">• DatabaseStorage Impl</text>
+  <text x="550" y="470" class="component">• Transaction Methods</text>
+  <text x="550" y="485" class="component">• User Management</text>
+  <text x="550" y="500" class="component">• Type Safety</text>
+
+  <!-- Hardware Integration -->
+  <rect x="760" y="400" width="180" height="120" class="box backend"/>
+  <text x="850" y="420" text-anchor="middle" class="component">Hardware Controller</text>
+  <text x="780" y="440" class="component">• Pump Management</text>
+  <text x="780" y="455" class="component">• WebSocket Events</text>
+  <text x="780" y="470" class="component">• Safety Systems</text>
+  <text x="780" y="485" class="component">• Flow Monitoring</text>
+  <text x="780" y="500" class="component">• Emergency Controls</text>
+
+  <!-- Database Layer -->
+  <text x="50" y="560" class="subtitle">Database Layer (PostgreSQL + Drizzle ORM)</text>
+
+  <!-- Database -->
+  <rect x="50" y="570" width="300" height="100" class="box database"/>
+  <text x="200" y="590" text-anchor="middle" class="component">PostgreSQL Database</text>
+  <text x="70" y="610" class="component">• Users Table - Authentication</text>
+  <text x="70" y="625" class="component">• Transactions Table - Payment Records</text>
+  <text x="70" y="640" class="component">• Sessions - User State</text>
+  <text x="70" y="655" class="component">• Optimized Indexes</text>
+
+  <!-- Schema -->
+  <rect x="380" y="570" width="200" height="100" class="box database"/>
+  <text x="480" y="590" text-anchor="middle" class="component">Shared Schema</text>
+  <text x="400" y="610" class="component">• Drizzle ORM Models</text>
+  <text x="400" y="625" class="component">• TypeScript Types</text>
+  <text x="400" y="640" class="component">• Zod Validation</text>
+  <text x="400" y="655" class="component">• Type Safety</text>
+
+  <!-- External Services -->
+  <text x="50" y="710" class="subtitle">External Integrations</text>
+
+  <!-- QR Code Service -->
+  <rect x="50" y="720" width="150" height="60" class="box external"/>
+  <text x="125" y="740" text-anchor="middle" class="component">PromptPay QR</text>
+  <text x="70" y="755" class="component">• QR Generation</text>
+  <text x="70" y="770" class="component">• Payment Processing</text>
+
+  <!-- Physical Hardware -->
+  <rect x="230" y="720" width="150" height="60" class="box external"/>
+  <text x="305" y="740" text-anchor="middle" class="component">Fuel Pumps</text>
+  <text x="250" y="755" class="component">• Hardware Control</text>
+  <text x="250" y="770" class="component">• Safety Systems</text>
+
+  <!-- Data Flow Arrows -->
+  <!-- Frontend to Backend -->
+  <path d="M 400 160 L 350 160 L 350 380 L 390 380 L 390 400" class="data-flow"/>
+  <text x="320" y="280" class="flow-text">API Calls</text>
+  <text x="320" y="295" class="flow-text">WebSocket</text>
+
+  <!-- Backend Internal -->
+  <path d="M 250 460 L 280 460" class="flow"/>
+  <path d="M 500 460 L 530 460" class="flow"/>
+  <path d="M 730 460 L 760 460" class="flow"/>
+
+  <!-- Backend to Database -->
+  <path d="M 630 520 L 630 550 L 200 550 L 200 570" class="data-flow"/>
+  <text x="540" y="545" class="flow-text">Drizzle ORM</text>
+
+  <!-- Hardware Integration -->
+  <path d="M 850 520 L 850 550 L 950 550 L 950 400 L 940 400" class="flow"/>
+
+  <!-- External Services -->
+  <path d="M 125 720 L 125 680 L 50 680 L 50 350" class="flow"/>
+  <path d="M 305 720 L 305 680 L 850 680 L 850 520" class="flow"/>
+
+  <!-- Performance Optimizations Box -->
+  <rect x="970" y="100" width="200" height="150" class="box frontend"/>
+  <text x="1070" y="120" text-anchor="middle" class="component">Performance Features</text>
+  <text x="990" y="140" class="component">• Lazy Loading Routes</text>
+  <text x="990" y="155" class="component">• Optimized Polling</text>
+  <text x="990" y="170" class="component">• Bundle Splitting</text>
+  <text x="990" y="185" class="component">• Mobile-First CSS</text>
+  <text x="990" y="200" class="component">• Icon Tree-Shaking</text>
+  <text x="990" y="215" class="component">• Smart Caching</text>
+  <text x="990" y="230" class="component">• Error Recovery</text>
+
+  <!-- Security & Auth Box -->
+  <rect x="970" y="270" width="200" height="100" class="box backend"/>
+  <text x="1070" y="290" text-anchor="middle" class="component">Security & Auth</text>
+  <text x="990" y="310" class="component">• Session-based Auth</text>
+  <text x="990" y="325" class="component">• CORS Protection</text>
+  <text x="990" y="340" class="component">• Input Validation</text>
+  <text x="990" y="355" class="component">• Emergency Controls</text>
+
+  <!-- Legend -->
+  <rect x="970" y="580" width="200" height="120" class="box"/>
+  <text x="1070" y="600" text-anchor="middle" class="component">Legend</text>
+  <rect x="990" y="610" width="15" height="10" class="frontend"/>
+  <text x="1015" y="620" class="component">Frontend Layer</text>
+  <rect x="990" y="630" width="15" height="10" class="backend"/>
+  <text x="1015" y="640" class="component">Backend Layer</text>
+  <rect x="990" y="650" width="15" height="10" class="database"/>
+  <text x="1015" y="660" class="component">Database Layer</text>
+  <rect x="990" y="670" width="15" height="10" class="external"/>
+  <text x="1015" y="680" class="component">External Services</text>
+</svg>
