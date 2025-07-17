@@ -115,7 +115,7 @@ export default function AnimatedFuelFlow({
       )}
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style suppressHydrationWarning={true}>{`
         @keyframes flowVertical {
           0% {
             top: -20px;
