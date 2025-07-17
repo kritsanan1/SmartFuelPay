@@ -226,6 +226,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Dashboard API endpoints
+  app.get("/api/admin/stats", async (req, res) => {
+    try {
+      const { timeRange = "today" } = req.query;
+      const transactions = await storage.getRecentTransactions(1000); // Get more for stats
+      
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (timeRange) {
+        case "today":
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case "week":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "month":
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case "year":
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      const filteredTransactions = transactions.filter(t => 
+        new Date(t.createdAt) >= startDate
+      );
+      
+      const successfulTransactions = filteredTransactions.filter(t => t.status === "success");
+      const totalRevenue = successfulTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      const avgTransactionValue = successfulTransactions.length > 0 ? totalRevenue / successfulTransactions.length : 0;
+      
+      // Calculate fuel dispensed (estimated)
+      const fuelDispensed = successfulTransactions.reduce((sum, t) => sum + parseFloat(t.estimatedVolume), 0);
+      
+      // Today's revenue specifically
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayTransactions = transactions.filter(t => 
+        new Date(t.createdAt) >= todayStart && t.status === "success"
+      );
+      const todayRevenue = todayTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      res.json({
+        totalTransactions: filteredTransactions.length,
+        todayRevenue,
+        totalRevenue,
+        avgTransactionValue,
+        fuelDispensed,
+        systemStatus: "Operational"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get stats" });
+    }
+  });
+
+  app.get("/api/admin/pumps", async (req, res) => {
+    try {
+      // Mock pump data - in real system this would come from hardware controller
+      const pumps = [
+        {
+          pumpId: "03",
+          status: "active",
+          currentTransaction: null,
+          lastMaintenance: "2024-01-15",
+          fuelLevel: 85
+        }
+      ];
+      
+      res.json(pumps);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get pump status" });
+    }
+  });
+
+  app.post("/api/admin/emergency-stop", async (req, res) => {
+    try {
+      // Emergency stop all pumps
+      await hardwareController.emergencyStop();
+      console.log("[Admin] Emergency stop activated by admin");
+      
+      res.json({ message: "Emergency stop activated" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to activate emergency stop" });
+    }
+  });
+
+  app.post("/api/admin/pumps/:pumpId/reset", async (req, res) => {
+    try {
+      const { pumpId } = req.params;
+      // Reset specific pump
+      await hardwareController.resetPump(pumpId);
+      console.log(`[Admin] Pump ${pumpId} reset by admin`);
+      
+      res.json({ message: `Pump ${pumpId} reset successfully` });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reset pump" });
+    }
+  });
+
+  app.post("/api/admin/fuel-prices", async (req, res) => {
+    try {
+      const { fuelType, price } = req.body;
+      
+      if (!fuelType || !price || price <= 0) {
+        return res.status(400).json({ message: "Valid fuel type and price required" });
+      }
+      
+      // In a real system, this would update the pricing database
+      console.log(`[Admin] Fuel price updated: ${fuelType} = ฿${price}/L`);
+      
+      res.json({ message: "Fuel price updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update fuel price" });
+    }
+  });
+
   app.post("/api/hardware/pump/:pumpId/reset", async (req, res) => {
     try {
       const { pumpId } = req.params;
