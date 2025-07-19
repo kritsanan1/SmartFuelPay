@@ -59,7 +59,7 @@ const maintenanceRecordFormSchema = z.object({
   notes: z.string().optional(),
 });
 
-export function MaintenanceSystem() {
+function MaintenanceSystem() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
@@ -138,11 +138,21 @@ export function MaintenanceSystem() {
   });
 
   const handleAddVehicle = (data: any) => {
-    addVehicleMutation.mutate(data);
+    const cleanedData = {
+      ...data,
+      year: parseInt(data.year) || new Date().getFullYear(),
+      mileage: parseInt(data.mileage) || 0,
+    };
+    addVehicleMutation.mutate(cleanedData);
   };
 
   const handleAddMaintenance = (data: any) => {
-    addMaintenanceMutation.mutate(data);
+    const cleanedData = {
+      ...data,
+      vehicleId: parseInt(data.vehicleId),
+      maintenanceTypeId: parseInt(data.maintenanceTypeId),
+    };
+    addMaintenanceMutation.mutate(cleanedData);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -237,8 +247,8 @@ export function MaintenanceSystem() {
                             <Input 
                               type="number" 
                               placeholder="2023" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || new Date().getFullYear())}
                             />
                           </FormControl>
                           <FormMessage />
@@ -688,3 +698,5 @@ export function MaintenanceSystem() {
     </div>
   );
 }
+
+export default MaintenanceSystem;
