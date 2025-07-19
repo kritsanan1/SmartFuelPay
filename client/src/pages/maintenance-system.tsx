@@ -7,514 +7,684 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { 
-  Wrench, AlertTriangle, CheckCircle, Clock, Calendar as CalendarIcon, 
-  Plus, FileText, Settings, Activity, Gauge, Droplets 
+  Car, 
+  Calendar, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  Settings, 
+  Plus,
+  Wrench,
+  AlertCircle,
+  Bell,
+  Search,
+  Filter,
+  TrendingUp,
+  BarChart3
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { format, addDays, isAfter, isBefore } from "date-fns";
+import type { Vehicle, MaintenanceRecord, MaintenanceReminder, MaintenanceType } from "@shared/schema";
 
-interface MaintenanceTask {
-  id: string;
-  title: string;
-  description: string;
-  pumpId: string;
-  type: "routine" | "emergency" | "inspection" | "repair";
-  priority: "low" | "medium" | "high" | "critical";
-  status: "scheduled" | "in_progress" | "completed" | "overdue";
-  scheduledDate: string;
-  completedDate?: string;
-  estimatedDuration: number; // minutes
-  assignedTo: string;
-  parts?: string[];
-  cost?: number;
-}
+// Form schemas
+const vehicleFormSchema = z.object({
+  licensePlate: z.string().min(1, "License plate is required"),
+  make: z.string().min(1, "Make is required"),
+  model: z.string().min(1, "Model is required"),
+  year: z.number().min(1900).max(new Date().getFullYear() + 1),
+  vin: z.string().optional(),
+  color: z.string().optional(),
+  fuelType: z.string().default("Gasoline"),
+  mileage: z.number().min(0).default(0),
+  ownerName: z.string().min(1, "Owner name is required"),
+  ownerPhone: z.string().optional(),
+  ownerEmail: z.string().email().optional().or(z.literal("")),
+  registrationExpiry: z.string().optional(),
+  insuranceExpiry: z.string().optional(),
+});
 
-interface MaintenanceRecord {
-  id: string;
-  taskId: string;
-  completedBy: string;
-  completedDate: string;
-  notes: string;
-  partsUsed: { name: string; quantity: number; cost: number }[];
-  totalCost: number;
-  nextMaintenanceDate?: string;
-}
+const maintenanceRecordFormSchema = z.object({
+  vehicleId: z.number(),
+  maintenanceTypeId: z.number(),
+  scheduledDate: z.string(),
+  mileageAtService: z.number().optional(),
+  cost: z.string().optional(),
+  serviceProvider: z.string().optional(),
+  notes: z.string().optional(),
+});
 
-export default function MaintenanceSystem() {
-  const [selectedTask, setSelectedTask] = useState<MaintenanceTask | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [newTaskOpen, setNewTaskOpen] = useState(false);
+export function MaintenanceSystem() {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [showAddVehicle, setShowAddVehicle] = useState(false);
+  const [showAddMaintenance, setShowAddMaintenance] = useState(false);
   const queryClient = useQueryClient();
 
-  // Mock maintenance data
-  const mockTasks: MaintenanceTask[] = [
-    {
-      id: "MT001",
-      title: "Monthly Filter Replacement",
-      description: "Replace fuel filter and air filter for optimal performance",
-      pumpId: "03",
-      type: "routine",
-      priority: "medium",
-      status: "scheduled",
-      scheduledDate: "2025-07-20",
-      estimatedDuration: 60,
-      assignedTo: "นาย สมชาย ใจดี",
-      parts: ["Fuel Filter", "Air Filter"],
-      cost: 850
-    },
-    {
-      id: "MT002",
-      title: "Emergency Pump Calibration",
-      description: "Urgent calibration needed due to measurement discrepancy",
-      pumpId: "03",
-      type: "emergency",
-      priority: "critical",
-      status: "in_progress",
-      scheduledDate: "2025-07-17",
-      estimatedDuration: 120,
-      assignedTo: "นาย วิชัย เทคนิค",
-      cost: 1200
-    },
-    {
-      id: "MT003",
-      title: "Quarterly Safety Inspection",
-      description: "Complete safety systems check and certification",
-      pumpId: "03",
-      type: "inspection",
-      priority: "high",
-      status: "overdue",
-      scheduledDate: "2025-07-15",
-      estimatedDuration: 180,
-      assignedTo: "นาง สุดา ตรวจสอบ",
-      cost: 2500
-    }
-  ];
-
-  const { data: tasks = mockTasks } = useQuery<MaintenanceTask[]>({
-    queryKey: ["/api/maintenance/tasks"],
+  // Fetch data
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
+    queryKey: ["/api/vehicles"],
   });
 
-  const { data: records = [] } = useQuery<MaintenanceRecord[]>({
-    queryKey: ["/api/maintenance/records"],
+  const { data: maintenanceTypes = [] } = useQuery({
+    queryKey: ["/api/maintenance-types"],
   });
 
-  const createTaskMutation = useMutation({
-    mutationFn: (task: Omit<MaintenanceTask, 'id'>) => 
-      apiRequest("/api/maintenance/tasks", "POST", task),
+  const { data: upcomingMaintenance = [] } = useQuery({
+    queryKey: ["/api/maintenance-records/upcoming"],
+  });
+
+  const { data: overdueMaintenance = [] } = useQuery({
+    queryKey: ["/api/maintenance-records/overdue"],
+  });
+
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["/api/maintenance-reminders"],
+  });
+
+  // Mutations
+  const addVehicleMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("/api/vehicles", { method: "POST", body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/maintenance/tasks"] });
-      setNewTaskOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      setShowAddVehicle(false);
     },
   });
 
-  const completeTaskMutation = useMutation({
-    mutationFn: ({ taskId, notes, parts }: { taskId: string; notes: string; parts: any[] }) =>
-      apiRequest(`/api/maintenance/tasks/${taskId}/complete`, "POST", { notes, parts }),
+  const addMaintenanceMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("/api/maintenance-records", { method: "POST", body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/maintenance/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/maintenance-records/upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/maintenance-records/overdue"] });
+      setShowAddMaintenance(false);
     },
   });
 
-  const getStatusColor = (status: MaintenanceTask['status']) => {
-    switch (status) {
-      case "scheduled": return "bg-blue-500";
-      case "in_progress": return "bg-yellow-500";
-      case "completed": return "bg-green-500";
-      case "overdue": return "bg-red-500";
-      default: return "bg-gray-500";
-    }
+  const dismissReminderMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/maintenance-reminders/${id}/dismiss`, { method: "PATCH" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/maintenance-reminders"] });
+    },
+  });
+
+  // Forms
+  const vehicleForm = useForm({
+    resolver: zodResolver(vehicleFormSchema),
+    defaultValues: {
+      licensePlate: "",
+      make: "",
+      model: "",
+      year: new Date().getFullYear(),
+      fuelType: "Gasoline",
+      mileage: 0,
+      ownerName: "",
+      ownerPhone: "",
+      ownerEmail: "",
+    },
+  });
+
+  const maintenanceForm = useForm({
+    resolver: zodResolver(maintenanceRecordFormSchema),
+    defaultValues: {
+      vehicleId: 0,
+      maintenanceTypeId: 0,
+      scheduledDate: "",
+    },
+  });
+
+  const handleAddVehicle = (data: any) => {
+    addVehicleMutation.mutate(data);
   };
 
-  const getPriorityColor = (priority: MaintenanceTask['priority']) => {
+  const handleAddMaintenance = (data: any) => {
+    addMaintenanceMutation.mutate(data);
+  };
+
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
+      case "urgent": return "destructive";
+      case "high": return "destructive";
+      case "medium": return "default";
       case "low": return "secondary";
-      case "medium": return "outline";
-      case "high": return "default";
-      case "critical": return "destructive";
-      default: return "secondary";
+      default: return "default";
     }
   };
 
-  const getTaskTypeIcon = (type: MaintenanceTask['type']) => {
-    switch (type) {
-      case "routine": return <Clock className="h-4 w-4" />;
-      case "emergency": return <AlertTriangle className="h-4 w-4" />;
-      case "inspection": return <Gauge className="h-4 w-4" />;
-      case "repair": return <Wrench className="h-4 w-4" />;
-      default: return <Settings className="h-4 w-4" />;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed": return "default";
+      case "scheduled": return "secondary";
+      case "overdue": return "destructive";
+      default: return "outline";
     }
   };
-
-  const filteredTasks = tasks.filter(task => 
-    filterStatus === "all" || task.status === filterStatus
-  );
-
-  const getStatusBadge = (status: MaintenanceTask['status']) => (
-    <Badge variant={status === "completed" ? "default" : status === "overdue" ? "destructive" : "secondary"}>
-      {status === "scheduled" ? "กำหนดการ" :
-       status === "in_progress" ? "กำลังดำเนินการ" :
-       status === "completed" ? "เสร็จสิ้น" : "เลยกำหนด"}
-    </Badge>
-  );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Maintenance Management</h1>
-            <p className="text-gray-600 dark:text-gray-300">ระบบจัดการการบำรุงรักษาและซ่อมบำรุง</p>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">Vehicle Maintenance System</h1>
+          <p className="text-muted-foreground">Track and manage vehicle maintenance schedules</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={showAddVehicle} onOpenChange={setShowAddVehicle}>
+            <DialogTrigger asChild>
+              <Button className="interactive-btn hover-lift">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Vehicle
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Vehicle</DialogTitle>
+                <DialogDescription>Enter vehicle details to start tracking maintenance</DialogDescription>
+              </DialogHeader>
+              <Form {...vehicleForm}>
+                <form onSubmit={vehicleForm.handleSubmit(handleAddVehicle)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={vehicleForm.control}
+                      name="licensePlate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>License Plate</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ABC 1234" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={vehicleForm.control}
+                      name="make"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Make</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Toyota" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={vehicleForm.control}
+                      name="model"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Model</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Camry" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={vehicleForm.control}
+                      name="year"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="2023" 
+                              {...field} 
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={vehicleForm.control}
+                      name="ownerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Owner Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={vehicleForm.control}
+                      name="ownerPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+66 123 456 789" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setShowAddVehicle(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={addVehicleMutation.isPending}>
+                      {addVehicleMutation.isPending ? "Adding..." : "Add Vehicle"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" className="hover-lift">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="premium-card hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{vehicles.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Active fleet vehicles
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-card hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Upcoming Maintenance</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{upcomingMaintenance.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Next 30 days
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-card hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue Items</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{overdueMaintenance.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Require immediate attention
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-card hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Reminders</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{reminders.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Notification pending
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="reminders">Reminders</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Critical Alerts */}
+          {(overdueMaintenance.length > 0 || reminders.filter(r => r.priority === "urgent").length > 0) && (
+            <Card className="border-destructive bg-destructive/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-destructive">
+                  <AlertCircle className="mr-2 h-5 w-5" />
+                  Critical Maintenance Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {overdueMaintenance.slice(0, 3).map((item: any) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div>
+                      <p className="font-medium">Overdue maintenance</p>
+                      <p className="text-sm text-muted-foreground">Vehicle ID: {item.vehicleId}</p>
+                    </div>
+                    <Badge variant="destructive">Overdue</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="premium-card hover-lift cursor-pointer" onClick={() => setActiveTab("vehicles")}>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Car className="mr-2 h-5 w-5" />
+                  Manage Vehicles
+                </CardTitle>
+                <CardDescription>Add, edit, and track vehicle information</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="premium-card hover-lift cursor-pointer" onClick={() => setShowAddMaintenance(true)}>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Wrench className="mr-2 h-5 w-5" />
+                  Schedule Maintenance
+                </CardTitle>
+                <CardDescription>Plan upcoming service appointments</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="premium-card hover-lift cursor-pointer" onClick={() => setActiveTab("reminders")}>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Bell className="mr-2 h-5 w-5" />
+                  View Reminders
+                </CardTitle>
+                <CardDescription>Check maintenance notifications</CardDescription>
+              </CardHeader>
+            </Card>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={newTaskOpen} onOpenChange={setNewTaskOpen}>
+        </TabsContent>
+
+        <TabsContent value="vehicles" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Vehicle Fleet</h2>
+            <Button onClick={() => setShowAddVehicle(true)} className="interactive-btn">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Vehicle
+            </Button>
+          </div>
+
+          {vehiclesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="loading-shimmer h-48" />
+              ))}
+            </div>
+          ) : vehicles.length === 0 ? (
+            <Card className="premium-card text-center py-12">
+              <CardContent>
+                <Car className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No vehicles registered</h3>
+                <p className="text-muted-foreground mb-4">Start by adding your first vehicle to track maintenance</p>
+                <Button onClick={() => setShowAddVehicle(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Vehicle
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vehicles.map((vehicle: Vehicle) => (
+                <Card key={vehicle.id} className="premium-card hover-lift cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{vehicle.licensePlate}</span>
+                      <Badge variant="outline">{vehicle.fuelType}</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Owner:</span>
+                        <span className="text-sm font-medium">{vehicle.ownerName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Mileage:</span>
+                        <span className="text-sm font-medium">{vehicle.mileage.toLocaleString()} km</span>
+                      </div>
+                      {vehicle.ownerPhone && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Phone:</span>
+                          <span className="text-sm font-medium">{vehicle.ownerPhone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="maintenance" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Maintenance Schedule</h2>
+            <Dialog open={showAddMaintenance} onOpenChange={setShowAddMaintenance}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  เพิ่มงานใหม่
+                <Button className="interactive-btn">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Schedule Maintenance
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>สร้างงานบำรุงรักษาใหม่</DialogTitle>
-                  <DialogDescription>กรอกรายละเอียดงานบำรุงรักษา</DialogDescription>
+                  <DialogTitle>Schedule Maintenance</DialogTitle>
+                  <DialogDescription>Plan a maintenance appointment</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">หัวข้องาน</Label>
-                    <Input id="title" placeholder="เช่น เปลี่ยนฟิลเตอร์รายเดือน" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">รายละเอียด</Label>
-                    <Textarea id="description" placeholder="อธิบายรายละเอียดงาน..." />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="type">ประเภทงาน</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="เลือกประเภท" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="routine">งานประจำ</SelectItem>
-                          <SelectItem value="emergency">งานเร่งด่วน</SelectItem>
-                          <SelectItem value="inspection">ตรวจสอบ</SelectItem>
-                          <SelectItem value="repair">ซ่อมแซม</SelectItem>
-                        </SelectContent>
-                      </Select>
+                <Form {...maintenanceForm}>
+                  <form onSubmit={maintenanceForm.handleSubmit(handleAddMaintenance)} className="space-y-4">
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="vehicleId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a vehicle" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {vehicles.map((vehicle: Vehicle) => (
+                                <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                                  {vehicle.licensePlate} - {vehicle.make} {vehicle.model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="maintenanceTypeId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maintenance Type</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select maintenance type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {maintenanceTypes.map((type: MaintenanceType) => (
+                                <SelectItem key={type.id} value={type.id.toString()}>
+                                  {type.name} - {type.category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="scheduledDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Scheduled Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setShowAddMaintenance(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={addMaintenanceMutation.isPending}>
+                        {addMaintenanceMutation.isPending ? "Scheduling..." : "Schedule"}
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">ความสำคัญ</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="เลือกระดับ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">ต่ำ</SelectItem>
-                          <SelectItem value="medium">ปานกลาง</SelectItem>
-                          <SelectItem value="high">สูง</SelectItem>
-                          <SelectItem value="critical">วิกฤต</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="assignedTo">ผู้รับผิดชอบ</Label>
-                      <Input id="assignedTo" placeholder="ชื่อช่าง/ผู้รับผิดชอบ" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="duration">เวลาที่ใช้ (นาที)</Label>
-                      <Input id="duration" type="number" placeholder="60" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>วันที่กำหนด</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "เลือกวันที่"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="flex gap-4">
-                    <Button className="flex-1">สร้างงาน</Button>
-                    <Button variant="outline" className="flex-1" onClick={() => setNewTaskOpen(false)}>
-                      ยกเลิก
-                    </Button>
-                  </div>
-                </div>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="scheduled">กำหนดการ</SelectItem>
-                <SelectItem value="in_progress">กำลังดำเนินการ</SelectItem>
-                <SelectItem value="completed">เสร็จสิ้น</SelectItem>
-                <SelectItem value="overdue">เลยกำหนด</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">งานที่รอดำเนินการ</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {tasks.filter(t => t.status === "scheduled").length}
-              </div>
-              <p className="text-xs text-muted-foreground">งานที่กำหนดไว้</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">กำลังดำเนินการ</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {tasks.filter(t => t.status === "in_progress").length}
-              </div>
-              <p className="text-xs text-muted-foreground">งานที่อยู่ระหว่างทำ</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">เลยกำหนด</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {tasks.filter(t => t.status === "overdue").length}
-              </div>
-              <p className="text-xs text-muted-foreground">ต้องดำเนินการเร่งด่วน</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">เสร็จสิ้นเดือนนี้</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {tasks.filter(t => t.status === "completed").length}
-              </div>
-              <p className="text-xs text-muted-foreground">งานที่ทำเสร็จแล้ว</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <Tabs defaultValue="tasks" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="tasks">รายการงาน</TabsTrigger>
-            <TabsTrigger value="calendar">ปฏิทินงาน</TabsTrigger>
-            <TabsTrigger value="records">ประวัติการบำรุงรักษา</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="tasks">
-            <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upcoming Maintenance */}
+            <Card className="premium-card">
               <CardHeader>
-                <CardTitle>รายการงานบำรุงรักษา</CardTitle>
-                <CardDescription>จัดการและติดตามงานบำรุงรักษาทั้งหมด</CardDescription>
+                <CardTitle className="flex items-center">
+                  <Clock className="mr-2 h-5 w-5 text-yellow-600" />
+                  Upcoming Maintenance
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>งาน</TableHead>
-                      <TableHead>ปั๊ม</TableHead>
-                      <TableHead>ประเภท</TableHead>
-                      <TableHead>ความสำคัญ</TableHead>
-                      <TableHead>วันที่กำหนด</TableHead>
-                      <TableHead>ผู้รับผิดชอบ</TableHead>
-                      <TableHead>สถานะ</TableHead>
-                      <TableHead>การดำเนินการ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTasks.map((task) => (
-                      <TableRow key={task.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{task.title}</div>
-                            <div className="text-sm text-gray-600">{task.description}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{task.pumpId}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getTaskTypeIcon(task.type)}
-                            <span className="capitalize">
-                              {task.type === "routine" ? "งานประจำ" :
-                               task.type === "emergency" ? "เร่งด่วน" :
-                               task.type === "inspection" ? "ตรวจสอบ" : "ซ่อมแซม"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getPriorityColor(task.priority)}>
-                            {task.priority === "low" ? "ต่ำ" :
-                             task.priority === "medium" ? "ปานกลาง" :
-                             task.priority === "high" ? "สูง" : "วิกฤต"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{format(new Date(task.scheduledDate), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell>{task.assignedTo}</TableCell>
-                        <TableCell>{getStatusBadge(task.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {task.status === "scheduled" && (
-                              <Button size="sm" variant="outline">
-                                เริ่มงาน
-                              </Button>
-                            )}
-                            {task.status === "in_progress" && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button size="sm">ทำเสร็จ</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>บันทึกการทำงานเสร็จสิ้น</DialogTitle>
-                                    <DialogDescription>กรอกรายละเอียดการทำงาน</DialogDescription>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="notes">หมายเหตุ</Label>
-                                      <Textarea 
-                                        id="notes" 
-                                        placeholder="บันทึกรายละเอียดการทำงาน ปัญหาที่พบ และการแก้ไข..."
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>อะไหล่ที่ใช้</Label>
-                                      <div className="text-sm text-gray-600">
-                                        {task.parts?.join(", ") || "ไม่มีอะไหล่"}
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                      <Button className="flex-1">บันทึกเสร็จสิ้น</Button>
-                                      <DialogTrigger asChild>
-                                        <Button variant="outline" className="flex-1">ยกเลิก</Button>
-                                      </DialogTrigger>
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            )}
-                            <Button size="sm" variant="ghost">
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            <Card>
-              <CardHeader>
-                <CardTitle>ปฏิทินงานบำรุงรักษา</CardTitle>
-                <CardDescription>ดูงานที่กำหนดในแต่ละวัน</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className="rounded-md border"
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">งานในวันที่เลือก</h3>
-                    {selectedDate && (
-                      <div className="space-y-3">
-                        {tasks
-                          .filter(task => 
-                            format(new Date(task.scheduledDate), 'yyyy-MM-dd') === 
-                            format(selectedDate, 'yyyy-MM-dd')
-                          )
-                          .map(task => (
-                            <Card key={task.id}>
-                              <CardContent className="p-4">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-medium">{task.title}</h4>
-                                    <p className="text-sm text-gray-600">{task.assignedTo}</p>
-                                    <p className="text-xs text-gray-500">{task.estimatedDuration} นาที</p>
-                                  </div>
-                                  {getStatusBadge(task.status)}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        {tasks.filter(task => 
-                          format(new Date(task.scheduledDate), 'yyyy-MM-dd') === 
-                          format(selectedDate, 'yyyy-MM-dd')
-                        ).length === 0 && (
-                          <p className="text-gray-500 text-center py-8">ไม่มีงานในวันนี้</p>
-                        )}
+                {upcomingMaintenance.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No upcoming maintenance scheduled</p>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingMaintenance.slice(0, 5).map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                        <div>
+                          <p className="font-medium">Vehicle ID: {item.vehicleId}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Scheduled: {new Date(item.scheduledDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">Scheduled</Badge>
                       </div>
-                    )}
+                    ))}
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="records">
-            <Card>
+            {/* Overdue Maintenance */}
+            <Card className="premium-card border-destructive">
               <CardHeader>
-                <CardTitle>ประวัติการบำรุงรักษา</CardTitle>
-                <CardDescription>บันทึกงานที่ทำเสร็จสิ้นแล้ว</CardDescription>
+                <CardTitle className="flex items-center text-destructive">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  Overdue Maintenance
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>ยังไม่มีประวัติการบำรุงรักษา</p>
-                  <p className="text-sm">เมื่อทำงานเสร็จแล้ว ประวัติจะแสดงที่นี่</p>
-                </div>
+                {overdueMaintenance.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No overdue maintenance</p>
+                ) : (
+                  <div className="space-y-3">
+                    {overdueMaintenance.slice(0, 5).map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                        <div>
+                          <p className="font-medium">Vehicle ID: {item.vehicleId}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Due: {new Date(item.scheduledDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant="destructive">Overdue</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reminders" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Maintenance Reminders</h2>
+          </div>
+
+          {reminders.length === 0 ? (
+            <Card className="premium-card text-center py-12">
+              <CardContent>
+                <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No active reminders</h3>
+                <p className="text-muted-foreground">All maintenance notifications have been addressed</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {reminders.map((reminder: MaintenanceReminder) => (
+                <Card key={reminder.id} className={`premium-card ${reminder.priority === "urgent" ? "border-destructive" : ""}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className={`p-2 rounded-full ${
+                          reminder.priority === "urgent" ? "bg-destructive/10 text-destructive" :
+                          reminder.priority === "high" ? "bg-orange-100 text-orange-600" :
+                          "bg-blue-100 text-blue-600"
+                        }`}>
+                          <Bell className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{reminder.message}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(reminder.reminderDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getPriorityColor(reminder.priority)}>
+                          {reminder.priority}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => dismissReminderMutation.mutate(reminder.id)}
+                          disabled={dismissReminderMutation.isPending}
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

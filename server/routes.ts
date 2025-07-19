@@ -1,7 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, updateTransactionSchema } from "@shared/schema";
+import { 
+  insertTransactionSchema, updateTransactionSchema,
+  insertVehicleSchema, updateVehicleSchema,
+  insertMaintenanceTypeSchema,
+  insertMaintenanceRecordSchema, updateMaintenanceRecordSchema,
+  insertMaintenanceReminderSchema
+} from "@shared/schema";
 import { HardwareController } from "./hardware";
 import { z } from "zod";
 
@@ -391,6 +397,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Emergency stop activated", pumpId });
     } catch (error) {
       res.status(500).json({ message: "Failed to activate emergency stop" });
+    }
+  });
+
+  // =================
+  // VEHICLE MANAGEMENT ENDPOINTS  
+  // =================
+
+  app.get("/api/vehicles", async (req, res) => {
+    try {
+      const vehicles = await storage.getAllVehicles();
+      res.json(vehicles);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get vehicles" });
+    }
+  });
+
+  app.get("/api/vehicles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const vehicle = await storage.getVehicle(id);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      res.json(vehicle);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get vehicle" });
+    }
+  });
+
+  app.post("/api/vehicles", async (req, res) => {
+    try {
+      const validatedData = insertVehicleSchema.parse(req.body);
+      const vehicle = await storage.createVehicle(validatedData);
+      res.status(201).json(vehicle);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid vehicle data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create vehicle" });
+    }
+  });
+
+  app.put("/api/vehicles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = updateVehicleSchema.parse({ ...req.body, id });
+      const vehicle = await storage.updateVehicle(validatedData);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      res.json(vehicle);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid vehicle data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update vehicle" });
+    }
+  });
+
+  app.delete("/api/vehicles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteVehicle(id);
+      if (!success) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      res.json({ message: "Vehicle deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete vehicle" });
+    }
+  });
+
+  // =================
+  // MAINTENANCE ENDPOINTS
+  // =================
+
+  app.get("/api/maintenance-types", async (req, res) => {
+    try {
+      const types = await storage.getAllMaintenanceTypes();
+      res.json(types);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get maintenance types" });
+    }
+  });
+
+  app.post("/api/maintenance-types", async (req, res) => {
+    try {
+      const validatedData = insertMaintenanceTypeSchema.parse(req.body);
+      const type = await storage.createMaintenanceType(validatedData);
+      res.status(201).json(type);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid maintenance type data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create maintenance type" });
+    }
+  });
+
+  app.get("/api/vehicles/:vehicleId/maintenance-records", async (req, res) => {
+    try {
+      const vehicleId = parseInt(req.params.vehicleId);
+      const records = await storage.getMaintenanceRecordsByVehicle(vehicleId);
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get maintenance records" });
+    }
+  });
+
+  app.get("/api/maintenance-records/upcoming", async (req, res) => {
+    try {
+      const daysAhead = parseInt(req.query.days as string) || 30;
+      const records = await storage.getUpcomingMaintenance(daysAhead);
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get upcoming maintenance" });
+    }
+  });
+
+  app.get("/api/maintenance-records/overdue", async (req, res) => {
+    try {
+      const records = await storage.getOverdueMaintenance();
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get overdue maintenance" });
+    }
+  });
+
+  app.post("/api/maintenance-records", async (req, res) => {
+    try {
+      const validatedData = insertMaintenanceRecordSchema.parse(req.body);
+      const record = await storage.createMaintenanceRecord(validatedData);
+      res.status(201).json(record);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid maintenance record data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create maintenance record" });
+    }
+  });
+
+  app.put("/api/maintenance-records/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = updateMaintenanceRecordSchema.parse({ ...req.body, id });
+      const record = await storage.updateMaintenanceRecord(validatedData);
+      if (!record) {
+        return res.status(404).json({ message: "Maintenance record not found" });
+      }
+      res.json(record);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid maintenance record data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update maintenance record" });
+    }
+  });
+
+  app.get("/api/maintenance-reminders", async (req, res) => {
+    try {
+      const reminders = await storage.getActiveReminders();
+      res.json(reminders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get maintenance reminders" });
+    }
+  });
+
+  app.post("/api/maintenance-reminders", async (req, res) => {
+    try {
+      const validatedData = insertMaintenanceReminderSchema.parse(req.body);
+      const reminder = await storage.createMaintenanceReminder(validatedData);
+      res.status(201).json(reminder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid reminder data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create reminder" });
+    }
+  });
+
+  app.patch("/api/maintenance-reminders/:id/read", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.markReminderAsRead(id);
+      if (!success) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      res.json({ message: "Reminder marked as read" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark reminder as read" });
+    }
+  });
+
+  app.patch("/api/maintenance-reminders/:id/dismiss", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.dismissReminder(id);
+      if (!success) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      res.json({ message: "Reminder dismissed" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to dismiss reminder" });
     }
   });
 
