@@ -12,15 +12,20 @@ export default function Navigation() {
   const isActive = (path: string) => location === path;
 
   const NavItems = () => (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col space-y-3">
       <Link href="/">
         <Button 
           variant={isActive("/") ? "default" : "ghost"} 
-          className="w-full justify-start"
+          className={`w-full justify-start hover-lift press-effect smooth-transition ${
+            isActive("/") ? "bg-gradient-primary text-white shadow-medium" : "hover:bg-trust-blue/10"
+          }`}
           onClick={() => setIsOpen(false)}
         >
-          <Home className="mr-2 h-4 w-4" />
-          Fuel Dispenser
+          <Home className="mr-3 h-4 w-4" />
+          <div className="text-left">
+            <div className="font-medium">Fuel Dispenser</div>
+            <div className="text-xs opacity-70">Main Interface</div>
+          </div>
         </Button>
       </Link>
       
@@ -92,14 +97,19 @@ export default function Navigation() {
         <div className="fixed top-4 left-4 z-50">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="bg-white/90 backdrop-blur-sm">
+              <Button variant="outline" size="icon" className="floating-action hover-lift press-effect">
                 <Menu className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72">
-              <div className="flex items-center space-x-2 mb-6">
-                <Fuel className="h-6 w-6" />
-                <h2 className="text-lg font-semibold">Fuel Station System</h2>
+            <SheetContent side="left" className="w-72 bg-gradient-to-b from-white to-clean-white-warm">
+              <div className="flex items-center space-x-3 mb-6 p-4 bg-gradient-primary rounded-xl text-white shadow-medium">
+                <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                  <Fuel className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight">Fuel Station</h2>
+                  <div className="text-sm opacity-80">Management System</div>
+                </div>
               </div>
               <NavItems />
             </SheetContent>

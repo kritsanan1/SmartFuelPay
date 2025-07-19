@@ -96,31 +96,33 @@ export default function FuelDispenser() {
   }
 
   return (
-    <div className="min-h-screen mobile-viewport-fix bg-clean-white font-sans">
-      {/* Header */}
-      <header className="bg-trust-blue text-white shadow-lg">
+    <div className="min-h-screen mobile-viewport-fix bg-gradient-to-br from-clean-white to-clean-white-warm font-sans">
+      {/* Enhanced Header with Glass Effect */}
+      <header className="bg-gradient-primary text-white shadow-strong sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
         <div className="container mx-auto container-mobile py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Fuel className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="flex items-center space-x-3 sm:space-x-4 animate-fade-in">
+              <div className="p-2 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
+                <Fuel className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
               <div>
-                <h1 className="text-mobile-title font-bold">{t.title}</h1>
-                <p className="text-blue-100 font-roboto text-sm sm:text-base hidden sm:block">{t.subtitle}</p>
+                <h1 className="text-mobile-title font-bold tracking-tight">{t.title}</h1>
+                <p className="text-blue-100 text-sm sm:text-base hidden sm:block opacity-90">{t.subtitle}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <Button
                 onClick={toggleLanguage}
                 variant="secondary"
-                className="bg-blue-600 hover:bg-blue-700 text-white border-none btn-mobile-sm"
+                className="glass-effect hover-lift press-effect focus-ring text-white border-white border-opacity-30 btn-mobile-sm backdrop-blur-sm transition-all duration-200"
               >
                 <Globe className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">
+                <span className="hidden sm:inline font-medium">
                   {language === LANGUAGES.TH ? "EN" : "ไทย"}
                 </span>
               </Button>
-              <div className="text-right">
-                <div className="text-xs sm:text-sm text-blue-100">หัวจ่าย / Pump</div>
+              <div className="text-right glass-effect rounded-lg px-3 py-2 backdrop-blur-sm border border-white border-opacity-30">
+                <div className="text-xs sm:text-sm text-blue-100 opacity-80">หัวจ่าย / Pump</div>
                 <div className="text-lg sm:text-xl font-bold">03</div>
               </div>
             </div>

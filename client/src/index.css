@@ -1,5 +1,6 @@
 @import "./styles/animations.css";
 @import "./styles/mobile-optimization.css";
+@import "./styles/enhanced-ui.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,13 +27,27 @@
   --ring: hsl(26, 83%, 5%);
   --radius: 0.5rem;
   
-  /* Custom fuel station colors */
+  /* Enhanced fuel station colors */
   --trust-blue: hsl(207, 100%, 40%);
+  --trust-blue-light: hsl(207, 100%, 50%);
+  --trust-blue-dark: hsl(207, 100%, 30%);
   --success-green: hsl(140, 100%, 33%);
+  --success-green-light: hsl(140, 100%, 40%);
   --warning-orange: hsl(20, 100%, 60%);
+  --warning-orange-light: hsl(20, 100%, 70%);
   --clean-white: hsl(210, 17%, 98%);
+  --clean-white-warm: hsl(45, 25%, 98%);
   --strong-black: hsl(0, 0%, 10%);
   --neutral-grey: hsl(210, 8%, 46%);
+  --neutral-grey-light: hsl(210, 8%, 70%);
+  --gradient-primary: linear-gradient(135deg, var(--trust-blue) 0%, var(--trust-blue-light) 100%);
+  --gradient-success: linear-gradient(135deg, var(--success-green) 0%, var(--success-green-light) 100%);
+  --gradient-warning: linear-gradient(135deg, var(--warning-orange) 0%, var(--warning-orange-light) 100%);
+  --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --glass-blur: blur(16px);
+  --glass-opacity: rgba(255, 255, 255, 0.25);
 }
 
 .dark {
@@ -76,63 +91,106 @@
 }
 
 @layer utilities {
-  .text-trust-blue {
-    color: var(--trust-blue);
+  /* Enhanced Color System */
+  .text-trust-blue { color: var(--trust-blue); }
+  .text-trust-blue-light { color: var(--trust-blue-light); }
+  .text-trust-blue-dark { color: var(--trust-blue-dark); }
+  .bg-trust-blue { background-color: var(--trust-blue); }
+  .bg-trust-blue-light { background-color: var(--trust-blue-light); }
+  .bg-trust-blue-dark { background-color: var(--trust-blue-dark); }
+  .border-trust-blue { border-color: var(--trust-blue); }
+  
+  .text-success-green { color: var(--success-green); }
+  .text-success-green-light { color: var(--success-green-light); }
+  .bg-success-green { background-color: var(--success-green); }
+  .bg-success-green-light { background-color: var(--success-green-light); }
+  .border-success-green { border-color: var(--success-green); }
+  
+  .text-warning-orange { color: var(--warning-orange); }
+  .text-warning-orange-light { color: var(--warning-orange-light); }
+  .bg-warning-orange { background-color: var(--warning-orange); }
+  .bg-warning-orange-light { background-color: var(--warning-orange-light); }
+  .border-warning-orange { border-color: var(--warning-orange); }
+  
+  .bg-clean-white { background-color: var(--clean-white); }
+  .bg-clean-white-warm { background-color: var(--clean-white-warm); }
+  .text-strong-black { color: var(--strong-black); }
+  .bg-strong-black { background-color: var(--strong-black); }
+  .text-neutral-grey { color: var(--neutral-grey); }
+  .text-neutral-grey-light { color: var(--neutral-grey-light); }
+  .bg-neutral-grey { background-color: var(--neutral-grey); }
+  .bg-neutral-grey-light { background-color: var(--neutral-grey-light); }
+  .border-neutral-grey { border-color: var(--neutral-grey); }
+  
+  /* Gradient Utilities */
+  .bg-gradient-primary { background: var(--gradient-primary); }
+  .bg-gradient-success { background: var(--gradient-success); }
+  .bg-gradient-warning { background: var(--gradient-warning); }
+  
+  /* Shadow System */
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-medium { box-shadow: var(--shadow-medium); }
+  .shadow-strong { box-shadow: var(--shadow-strong); }
+  
+  /* Glass Morphism */
+  .glass-effect {
+    background: var(--glass-opacity);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
   
-  .bg-trust-blue {
-    background-color: var(--trust-blue);
+  /* Interactive States */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
   }
   
-  .border-trust-blue {
-    border-color: var(--trust-blue);
+  .press-effect {
+    transition: transform 0.1s ease;
+  }
+  .press-effect:active {
+    transform: scale(0.98);
   }
   
-  .text-success-green {
-    color: var(--success-green);
+  /* Enhanced Focus States */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: var(--trust-blue);
   }
   
-  .bg-success-green {
-    background-color: var(--success-green);
+  .focus-ring:focus {
+    --tw-ring-color: var(--trust-blue);
   }
   
-  .border-success-green {
-    border-color: var(--success-green);
+  /* Smooth Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
   }
   
-  .text-warning-orange {
-    color: var(--warning-orange);
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
   }
   
-  .bg-warning-orange {
-    background-color: var(--warning-orange);
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
   }
   
-  .border-warning-orange {
-    border-color: var(--warning-orange);
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   
-  .bg-clean-white {
-    background-color: var(--clean-white);
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
   
-  .text-strong-black {
-    color: var(--strong-black);
-  }
-  
-  .bg-strong-black {
-    background-color: var(--strong-black);
-  }
-  
-  .text-neutral-grey {
-    color: var(--neutral-grey);
-  }
-  
-  .bg-neutral-grey {
-    background-color: var(--neutral-grey);
-  }
-  
-  .border-neutral-grey {
-    border-color: var(--neutral-grey);
+  @keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
   }
 }
